@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "postgres-mcp": {
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-i",
+        "--network", "postgres-net",
+        "crystaldba/postgres-mcp"
+      ],
+      "env": {
+        "DATABASE_URL": "postgresql://admin:Pass123qp@postgres:5432/defaultdb",
+        "ACCESS_MODE": "restricted"
+      }
+    }
+  }
+}
