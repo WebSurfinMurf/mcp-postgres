@@ -15,9 +15,14 @@ DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST
 # Get access mode from environment or default to restricted
 ACCESS_MODE="${MCP_ACCESS_MODE:-restricted}"
 
+# Check if container is already running and remove it
+docker stop mcp-postgres 2>/dev/null || true
+docker rm mcp-postgres 2>/dev/null || true
+
 # Run the MCP server with stdio transport
 # Note: The container expects DATABASE_URI not DATABASE_URL
 exec docker run --rm -i \
+  --name mcp-postgres \
   --network host \
   -e DATABASE_URI="${DATABASE_URL}" \
   -e DATABASE_URL="${DATABASE_URL}" \

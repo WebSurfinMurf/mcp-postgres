@@ -3,13 +3,14 @@
 ## Project Overview
 This is the MCP (Model Context Protocol) PostgreSQL server that provides database management and query capabilities to Claude.
 
-## Current Production Configuration (2025-08-29)
+## Current Production Configuration (2025-08-31)
 - **Host**: linuxserver.lan (remote PostgreSQL server)
 - **Database**: postgres (main database)
 - **User**: admin
 - **Password**: Pass123qp
 - **Port**: 5432
 - **PostgreSQL Version**: 15.13
+- **Status**: ✅ WORKING - Verified connection and MCP process running
 
 ## Configuration Files
 
@@ -267,7 +268,56 @@ tail -f ~/.local/state/claude/logs/mcp-*.log
 2. Restart Claude: `exit` then `startclaude`
 3. Verify connection with test query
 
+## Diagnostic Information (2025-08-31)
+
+### Current System Status
+1. **PostgreSQL Connection**: ✅ Working
+   - Direct connection test successful: `PGPASSWORD='Pass123qp' psql -h linuxserver.lan -U admin -d postgres`
+   - Remote server accessible and responding
+
+2. **MCP Processes**: ✅ Running
+   - MCP Memory PostgreSQL: PID 278247 (running as local process)
+   - MCP Fetch: Docker container (festive_snyder)
+   - MCP Filesystem: Docker container (vigilant_beaver)
+   - MCP GitHub: PID 278564 (node process)
+
+3. **Important Finding**: MCP servers MUST run as local processes with stdio communication
+   - ❌ Docker containers for MCP servers don't work (no stdio)
+   - ✅ Local scripts in deploy.sh files handle stdio correctly
+   - Configuration in `~/.config/claude/mcp-settings.json` correctly uses local scripts
+
+### Common Misconceptions
+1. **MCP servers are NOT Docker containers**: They run as local processes managed by Claude Code
+2. **The "mcp-memory" Docker container failure is expected**: It was trying to run without stdio
+3. **MCP servers communicate via stdio**: They cannot run as standalone Docker services
+
+### Verification Commands
+```bash
+# Check PostgreSQL connectivity
+PGPASSWORD='Pass123qp' psql -h linuxserver.lan -p 5432 -U admin -d postgres -c "SELECT 1;"
+
+# Check running MCP processes
+ps aux | grep -E "mcp|postgres" | grep -v grep
+
+# Check MCP configuration
+cat ~/.config/claude/mcp-settings.json
+
+# View MCP logs (if available)
+ls -la ~/.local/state/claude/logs/mcp-*.log 2>/dev/null
+```
+
+### Databases Available
+- postgres (main database, admin user)
+- mcp_memory_administrator (memory MCP database)
+- openproject_production
+- plane_db
+- nextcloud
+- guacamole_db
+- postfixadmin
+- keycloak (on separate container)
+
 ## Version History
+- 2025-08-31: Diagnosed and documented MCP architecture (stdio-based, not Docker containers)
 - 2025-08-29: Documented current configuration with linuxserver.lan
 - 2025-08-28: Fixed configuration conflict with mcp-memory.env
 - Initial setup with remote PostgreSQL connection
